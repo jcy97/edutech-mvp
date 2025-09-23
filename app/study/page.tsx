@@ -392,7 +392,8 @@ export default function StudyPage() {
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="답을 입력해주세요"
-                  className="h-14 text-xl text-center font-bold bg-purple-50 border-2 border-purple-200 focus:border-purple-400"
+                  className="h-20 text-center font-bold bg-purple-50 border-2 border-purple-200 focus:border-purple-400 placeholder:text-2xl"
+                  style={{ fontSize: "2.25rem", lineHeight: "2.5rem" }}
                   onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
                 />
               </div>
