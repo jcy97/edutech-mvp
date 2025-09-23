@@ -7,6 +7,7 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 
 interface SettingsData {
   service_name: string;
@@ -53,6 +54,16 @@ interface SettingsProviderProps {
 export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   const [settings, setSettings] = useState<SettingsData>(defaultSettings);
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+
+  const updateTitle = (serviceName: string) => {
+    if (typeof document !== "undefined") {
+      document.title = serviceName;
+      setTimeout(() => {
+        document.title = serviceName;
+      }, 0);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -60,16 +71,15 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
       const data = await response.json();
       if (data.success) {
         setSettings(data.data);
-
-        if (typeof document !== "undefined") {
-          document.title = `${data.data.service_name}`;
-        }
+        updateTitle(data.data.service_name);
       } else {
         setSettings(defaultSettings);
+        updateTitle(defaultSettings.service_name);
       }
     } catch (error) {
       console.error("Failed to fetch settings:", error);
       setSettings(defaultSettings);
+      updateTitle(defaultSettings.service_name);
     } finally {
       setLoading(false);
     }
@@ -83,6 +93,20 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   useEffect(() => {
     fetchSettings();
   }, []);
+
+  useEffect(() => {
+    updateTitle(settings.service_name);
+  }, [pathname, settings.service_name]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.title !== settings.service_name) {
+        document.title = settings.service_name;
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [settings.service_name]);
 
   return (
     <SettingsContext.Provider value={{ settings, loading, refreshSettings }}>

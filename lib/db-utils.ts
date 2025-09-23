@@ -200,7 +200,10 @@ export const dbUtils = {
   },
 
   async deleteProblem(id: string) {
-    const { error } = await (supabase as any).from("problems").delete().eq("id", id);
+    const { error } = await (supabase as any)
+      .from("problems")
+      .delete()
+      .eq("id", id);
 
     if (error) throw error;
   },
@@ -221,7 +224,8 @@ export const dbUtils = {
   },
 
   async getUserStats() {
-    const { data, error } = await (supabase as any).from("user_answers").select(`
+    const { data, error } = await (supabase as any).from("user_answers")
+      .select(`
         *,
         session:user_sessions(*),
         user:user_sessions(user:users(*))
@@ -305,7 +309,9 @@ export const dbUtils = {
     });
 
     if (error) {
-      const { data: fallbackData, error: fallbackError } = await (supabase as any)
+      const { data: fallbackData, error: fallbackError } = await (
+        supabase as any
+      )
         .from("problems")
         .select("*")
         .eq("is_active", true)

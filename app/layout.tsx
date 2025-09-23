@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AI 수학 친구 - 초등학생을 위한 수학 학습 플랫폼",
+  title: "수학 학습 플랫폼",
   description: "AI 챗봇과 함께하는 초등학교 5학년 수학 학습 서비스",
 };
 
