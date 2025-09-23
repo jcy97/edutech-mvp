@@ -213,6 +213,10 @@ export default function StudyPage() {
     }
   };
 
+  const handleNextClick = () => {
+    handleNext();
+  };
+
   const completeSession = async (lastAttempt?: {
     problemId: string;
     userAnswer: string;
@@ -405,7 +409,7 @@ export default function StudyPage() {
 
                 {hasSubmitted && (
                   <Button
-                    onClick={handleNext}
+                    onClick={handleNextClick}
                     size="lg"
                     className={`px-8 py-6 text-xl font-bold rounded-2xl ${
                       isLastProblem

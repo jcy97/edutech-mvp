@@ -14,7 +14,7 @@ type AdminDashboardStats =
 
 export const dbUtils = {
   async getActiveProblems() {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("problems")
       .select("*")
       .eq("is_active", true);
@@ -24,7 +24,7 @@ export const dbUtils = {
   },
 
   async getProblemWithHints(problemId: string) {
-    const { data: problem, error: problemError } = await supabase
+    const { data: problem, error: problemError } = await (supabase as any)
       .from("problems")
       .select("*")
       .eq("id", problemId)
@@ -32,7 +32,7 @@ export const dbUtils = {
 
     if (problemError) throw problemError;
 
-    const { data: hints, error: hintsError } = await supabase
+    const { data: hints, error: hintsError } = await (supabase as any)
       .from("hints")
       .select("*")
       .eq("problem_id", problemId)
@@ -47,7 +47,7 @@ export const dbUtils = {
   },
 
   async createUser(name: string, className: string) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("users")
       .insert({ name, class_name: className })
       .select()
@@ -58,7 +58,7 @@ export const dbUtils = {
   },
 
   async createUserSession(userId: string, totalProblems: number) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("user_sessions")
       .insert({ user_id: userId, total_problems: totalProblems })
       .select()
@@ -78,7 +78,7 @@ export const dbUtils = {
     chatbotUsed?: boolean;
     wrongAttempts?: string[];
   }) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("user_answers")
       .insert({
         session_id: answerData.sessionId,
@@ -98,7 +98,7 @@ export const dbUtils = {
   },
 
   async endUserSession(sessionId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("user_sessions")
       .update({ end_time: new Date().toISOString() })
       .eq("id", sessionId)
@@ -110,7 +110,7 @@ export const dbUtils = {
   },
 
   async getSessionResults(sessionId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("user_answers")
       .select(
         `
@@ -125,7 +125,7 @@ export const dbUtils = {
   },
 
   async getAdminSetting(key: string) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("admin_settings")
       .select("setting_value")
       .eq("setting_key", key)
@@ -136,7 +136,7 @@ export const dbUtils = {
   },
 
   async updateAdminSetting(key: string, value: string) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("admin_settings")
       .upsert({
         setting_key: key,
@@ -151,7 +151,7 @@ export const dbUtils = {
   },
 
   async getAllProblems() {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("problems")
       .select(
         `
@@ -170,7 +170,7 @@ export const dbUtils = {
     correctAnswers: string[],
     isActive: boolean = true
   ) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("problems")
       .insert({
         question,
@@ -185,7 +185,7 @@ export const dbUtils = {
   },
 
   async updateProblem(id: string, updates: Partial<Problem>) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("problems")
       .update({
         ...updates,
@@ -200,13 +200,13 @@ export const dbUtils = {
   },
 
   async deleteProblem(id: string) {
-    const { error } = await supabase.from("problems").delete().eq("id", id);
+    const { error } = await (supabase as any).from("problems").delete().eq("id", id);
 
     if (error) throw error;
   },
 
   async createHint(problemId: string, hintText: string, orderIndex: number) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("hints")
       .insert({
         problem_id: problemId,
@@ -221,7 +221,7 @@ export const dbUtils = {
   },
 
   async getUserStats() {
-    const { data, error } = await supabase.from("user_answers").select(`
+    const { data, error } = await (supabase as any).from("user_answers").select(`
         *,
         session:user_sessions(*),
         user:user_sessions(user:users(*))
@@ -232,7 +232,7 @@ export const dbUtils = {
   },
 
   async getServiceName() {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("admin_settings")
       .select("setting_value")
       .eq("setting_key", "service_name")
@@ -247,7 +247,7 @@ export const dbUtils = {
   },
 
   async getDashboardStats() {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("admin_dashboard_stats")
       .select("*")
       .single();
@@ -263,7 +263,7 @@ export const dbUtils = {
     botResponse?: string;
     context?: any;
   }) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("chatbot_conversations")
       .insert({
         session_id: conversationData.sessionId,
@@ -280,7 +280,7 @@ export const dbUtils = {
   },
 
   async getChatbotHistory(sessionId: string, problemId?: string) {
-    let query = supabase
+    let query = (supabase as any)
       .from("chatbot_conversations")
       .select("*")
       .eq("session_id", sessionId)
@@ -300,12 +300,12 @@ export const dbUtils = {
     const totalProblems =
       count || parseInt((await this.getAdminSetting("total_problems")) || "5");
 
-    const { data, error } = await supabase.rpc("get_random_problems", {
+    const { data, error } = await (supabase as any).rpc("get_random_problems", {
       problem_count: totalProblems,
     });
 
     if (error) {
-      const { data: fallbackData, error: fallbackError } = await supabase
+      const { data: fallbackData, error: fallbackError } = await (supabase as any)
         .from("problems")
         .select("*")
         .eq("is_active", true)

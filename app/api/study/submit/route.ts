@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+interface Problem {
+  correct_answers: string[];
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -34,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const correctAnswers = problemData.correct_answers || [];
+    const correctAnswers = (problemData as Problem).correct_answers || [];
     const isCorrect = correctAnswers.some(
       (answer: string) =>
         answer.toLowerCase().trim() === user_answer.toLowerCase().trim()
