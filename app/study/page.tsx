@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSettings } from "@/lib/settings-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ interface StudySession {
 
 export default function StudyPage() {
   const router = useRouter();
+  const { settings } = useSettings();
   const [session, setSession] = useState<StudySession | null>(null);
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
@@ -279,7 +281,13 @@ export default function StudyPage() {
   };
 
   const handleChatSubmit = async () => {
-    if (!chatInput.trim() || !session || isChatLoading) return;
+    if (
+      !chatInput.trim() ||
+      !session ||
+      isChatLoading ||
+      !settings.chatbot_enabled
+    )
+      return;
 
     const userMessage = chatInput.trim();
     const currentProblem = session.problems[currentProblemIndex];
@@ -377,90 +385,96 @@ export default function StudyPage() {
             {formatTime(timeLeft)}
           </div>
 
-          <Dialog open={chatOpen} onOpenChange={setChatOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="lg"
-                className={`rounded-full w-24 h-24 bg-gradient-to-r from-yellow-300 to-orange-400 hover:from-yellow-400 hover:to-orange-500 text-2xl text-white border-0 shadow-xl hover:shadow-2xl transition-all ${
-                  shouldShake ? "animate-bounce" : ""
-                }`}
-              >
-                <Bot style={{ width: "40px", height: "40px" }} />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Bot size={30} />
-                  AI 친구와 채팅하기 💫
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
-                  {chatMessages.length === 0 ? (
-                    <div className="text-center text-gray-500 text-sm">
-                      궁금한 것이 있으면 언제든 물어봐! 🤗
-                    </div>
-                  ) : (
-                    chatMessages.map((msg, idx) => (
-                      <div
-                        key={idx}
-                        className={`flex ${
-                          msg.type === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
+          {settings.chatbot_enabled && (
+            <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className={`rounded-full w-24 h-24 bg-gradient-to-r from-yellow-300 to-orange-400 hover:from-yellow-400 hover:to-orange-500 text-2xl text-white border-0 shadow-xl hover:shadow-2xl transition-all ${
+                    shouldShake ? "animate-bounce" : ""
+                  }`}
+                >
+                  <Bot style={{ width: "40px", height: "40px" }} />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Bot size={30} />
+                    AI 친구와 채팅하기 💫
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
+                    {chatMessages.length === 0 ? (
+                      <div className="text-center text-gray-500 text-sm">
+                        궁금한 것이 있으면 언제든 물어봐! 🤗
+                      </div>
+                    ) : (
+                      chatMessages.map((msg, idx) => (
                         <div
-                          className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                          key={idx}
+                          className={`flex ${
                             msg.type === "user"
-                              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
-                              : "bg-gradient-to-r from-yellow-100 to-orange-100 text-gray-800 border border-orange-200"
+                              ? "justify-end"
+                              : "justify-start"
                           }`}
                         >
-                          {msg.message}
+                          <div
+                            className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                              msg.type === "user"
+                                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                                : "bg-gradient-to-r from-yellow-100 to-orange-100 text-gray-800 border border-orange-200"
+                            }`}
+                          >
+                            {msg.message}
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                  {isChatLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-3 rounded-lg text-sm border border-orange-200">
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-100"></div>
-                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-200"></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="궁금한게 있어? 물어봐! 😊"
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && !isChatLoading && handleChatSubmit()
-                    }
-                    disabled={isChatLoading}
-                    className="border-orange-200 focus:border-orange-400"
-                  />
-                  <Button
-                    onClick={handleChatSubmit}
-                    size="sm"
-                    disabled={!chatInput.trim() || isChatLoading}
-                    className="bg-gradient-to-r from-orange-400 to-yellow-500 hover:from-orange-500 hover:to-yellow-600"
-                  >
-                    {isChatLoading ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <Send size={16} />
+                      ))
                     )}
-                  </Button>
+                    {isChatLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-3 rounded-lg text-sm border border-orange-200">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-100"></div>
+                            <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-200"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="궁금한게 있어? 물어봐! 😊"
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        !isChatLoading &&
+                        handleChatSubmit()
+                      }
+                      disabled={isChatLoading}
+                      className="border-orange-200 focus:border-orange-400"
+                    />
+                    <Button
+                      onClick={handleChatSubmit}
+                      size="sm"
+                      disabled={!chatInput.trim() || isChatLoading}
+                      className="bg-gradient-to-r from-orange-400 to-yellow-500 hover:from-orange-500 hover:to-yellow-600"
+                    >
+                      {isChatLoading ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <Send size={16} />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-3xl">
