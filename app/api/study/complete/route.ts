@@ -7,6 +7,7 @@ interface AttemptResult {
   isCorrect: boolean;
   hintsUsed: number;
   timeSpent: number;
+  chatbotUsed: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,8 +36,8 @@ export async function POST(request: NextRequest) {
       is_correct: attempt.isCorrect,
       hints_used: attempt.hintsUsed,
       time_spent: attempt.timeSpent,
-      wrong_attempts: 0,
-      chatbot_used: false,
+      wrong_attempts: [],
+      chatbot_used: attempt.chatbotUsed || false,
     }));
 
     const [sessionResult, answersResult] = await Promise.all([

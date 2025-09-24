@@ -26,7 +26,6 @@ interface UserStat {
   hints_used: number;
   total_time: number;
   chatbot_used: boolean;
-  chatbot_accuracy: number;
 }
 
 interface ProblemStat {
@@ -207,9 +206,6 @@ export default function AdminDashboard() {
                             <TableHead className="whitespace-nowrap">
                               챗봇 사용
                             </TableHead>
-                            <TableHead className="whitespace-nowrap">
-                              챗봇 정답률
-                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -240,15 +236,12 @@ export default function AdminDashboard() {
                                 <TableCell>
                                   {stat.chatbot_used ? "사용" : "미사용"}
                                 </TableCell>
-                                <TableCell>
-                                  {stat.chatbot_accuracy.toFixed(1)}%
-                                </TableCell>
                               </TableRow>
                             ))
                           ) : (
                             <TableRow>
                               <TableCell
-                                colSpan={10}
+                                colSpan={9}
                                 className="text-center py-8 text-gray-500"
                               >
                                 {userLoading

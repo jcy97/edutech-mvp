@@ -21,6 +21,7 @@ import {
   Sparkles,
   Heart,
   Star,
+  Bot,
 } from "lucide-react";
 
 interface Problem {
@@ -69,6 +70,9 @@ export default function StudyPage() {
     Array<{ type: "user" | "bot"; message: string }>
   >([]);
   const [chatInput, setChatInput] = useState("");
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatbotUsedForCurrentProblem, setChatbotUsedForCurrentProblem] =
+    useState(false);
   const [shouldShake, setShouldShake] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -81,6 +85,7 @@ export default function StudyPage() {
       isCorrect: boolean;
       hintsUsed: number;
       timeSpent: number;
+      chatbotUsed: boolean;
     }>
   >([]);
 
@@ -171,6 +176,7 @@ export default function StudyPage() {
         isCorrect: isCorrect,
         hintsUsed: usedHints,
         timeSpent: timeSpent,
+        chatbotUsed: chatbotUsedForCurrentProblem,
       },
     ]);
 
@@ -191,6 +197,7 @@ export default function StudyPage() {
           isCorrect: isCorrect,
           hintsUsed: usedHints,
           timeSpent: timeSpent,
+          chatbotUsed: chatbotUsedForCurrentProblem,
         };
 
         handleNext(finalAttempt);
@@ -204,6 +211,7 @@ export default function StudyPage() {
     isCorrect: boolean;
     hintsUsed: number;
     timeSpent: number;
+    chatbotUsed: boolean;
   }) => {
     if (!session) return;
 
@@ -216,6 +224,7 @@ export default function StudyPage() {
       currentHintIndex.current = 0;
       setTimeLeft(session.settings.timer_minutes * 60);
       setChatMessages([]);
+      setChatbotUsedForCurrentProblem(false);
       startTimeRef.current = Date.now();
     } else {
       completeSession(lastAttempt);
@@ -232,6 +241,7 @@ export default function StudyPage() {
     isCorrect: boolean;
     hintsUsed: number;
     timeSpent: number;
+    chatbotUsed: boolean;
   }) => {
     if (!session) return;
 
@@ -268,19 +278,63 @@ export default function StudyPage() {
     }
   };
 
-  const handleChatSubmit = () => {
-    if (!chatInput.trim()) return;
+  const handleChatSubmit = async () => {
+    if (!chatInput.trim() || !session || isChatLoading) return;
+
+    const userMessage = chatInput.trim();
+    const currentProblem = session.problems[currentProblemIndex];
 
     setChatMessages((prev) => [
       ...prev,
-      { type: "user", message: chatInput },
-      {
-        type: "bot",
-        message:
-          "안녕! 나는 너의 수학 친구야! 지금은 준비중이지만 곧 도와줄게! 😊",
-      },
+      { type: "user", message: userMessage },
     ]);
     setChatInput("");
+    setIsChatLoading(true);
+
+    if (!chatbotUsedForCurrentProblem) {
+      setChatbotUsedForCurrentProblem(true);
+    }
+
+    try {
+      const response = await fetch("/api/chatbot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          sessionId: session.session.id,
+          problemId: currentProblem.id,
+          problemText: currentProblem.question,
+          userAnswer: userAnswer || "",
+          hints: currentProblem.hints
+            .slice(0, usedHints)
+            .map((hint) => hint.hint_text),
+        }),
+      });
+
+      const data = await response.json();
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          type: "bot",
+          message:
+            data.message || "미안해, 지금 좀 바빠서 나중에 다시 물어볼래? 😅",
+        },
+      ]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          type: "bot",
+          message: "앗, 지금 좀 문제가 있어! 잠깐 후에 다시 물어봐줘! 😅",
+        },
+      ]);
+    }
+
+    setIsChatLoading(false);
   };
 
   if (!session) {
@@ -328,18 +382,18 @@ export default function StudyPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className={`rounded-full w-16 h-16 bg-green-400 hover:bg-green-500 text-white border-0 shadow-xl ${
+                className={`rounded-full w-24 h-24 bg-gradient-to-r from-yellow-300 to-orange-400 hover:from-yellow-400 hover:to-orange-500 text-2xl text-white border-0 shadow-xl hover:shadow-2xl transition-all ${
                   shouldShake ? "animate-bounce" : ""
                 }`}
               >
-                <MessageCircle size={24} />
+                <Bot style={{ width: "40px", height: "40px" }} />
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <MessageCircle className="text-green-500" />
-                  수학 친구와 채팅하기
+                  <Bot size={30} />
+                  AI 친구와 채팅하기 💫
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
@@ -357,10 +411,10 @@ export default function StudyPage() {
                         }`}
                       >
                         <div
-                          className={`max-w-[80%] p-2 rounded-lg text-sm ${
+                          className={`max-w-[80%] p-3 rounded-lg text-sm ${
                             msg.type === "user"
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-200 text-gray-800"
+                              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                              : "bg-gradient-to-r from-yellow-100 to-orange-100 text-gray-800 border border-orange-200"
                           }`}
                         >
                           {msg.message}
@@ -368,16 +422,40 @@ export default function StudyPage() {
                       </div>
                     ))
                   )}
+                  {isChatLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-3 rounded-lg text-sm border border-orange-200">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-100"></div>
+                          <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-200"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Input
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="메시지를 입력하세요..."
-                    onKeyPress={(e) => e.key === "Enter" && handleChatSubmit()}
+                    placeholder="궁금한게 있어? 물어봐! 😊"
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && !isChatLoading && handleChatSubmit()
+                    }
+                    disabled={isChatLoading}
+                    className="border-orange-200 focus:border-orange-400"
                   />
-                  <Button onClick={handleChatSubmit} size="sm">
-                    <Send size={16} />
+                  <Button
+                    onClick={handleChatSubmit}
+                    size="sm"
+                    disabled={!chatInput.trim() || isChatLoading}
+                    className="bg-gradient-to-r from-orange-400 to-yellow-500 hover:from-orange-500 hover:to-yellow-600"
+                  >
+                    {isChatLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Send size={16} />
+                    )}
                   </Button>
                 </div>
               </div>
