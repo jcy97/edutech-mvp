@@ -73,6 +73,7 @@ export default function StudyPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const hintAddedByTimer = useRef<boolean>(false);
+  const currentHintIndex = useRef<number>(0);
   const [allAttempts, setAllAttempts] = useState<
     Array<{
       problemId: string;
@@ -100,6 +101,7 @@ export default function StudyPage() {
 
     startTimeRef.current = Date.now();
     hintAddedByTimer.current = false;
+    currentHintIndex.current = usedHints;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -121,9 +123,15 @@ export default function StudyPage() {
     if (!session || hintAddedByTimer.current) return;
 
     const currentProblem = session.problems[currentProblemIndex];
-    if (usedHints < currentProblem.hints.length) {
-      setUsedHints((prev) => prev + 1);
+
+    if (currentHintIndex.current < currentProblem.hints.length) {
       hintAddedByTimer.current = true;
+      currentHintIndex.current++;
+      setUsedHints(currentHintIndex.current);
+
+      setTimeout(() => {
+        hintAddedByTimer.current = false;
+      }, 1000);
     }
   };
 
@@ -205,6 +213,7 @@ export default function StudyPage() {
       setHasSubmitted(false);
       setCurrentResult(null);
       setUsedHints(0);
+      currentHintIndex.current = 0;
       setTimeLeft(session.settings.timer_minutes * 60);
       setChatMessages([]);
       startTimeRef.current = Date.now();
@@ -253,8 +262,9 @@ export default function StudyPage() {
     if (!session) return;
 
     const currentProblem = session.problems[currentProblemIndex];
-    if (usedHints < currentProblem.hints.length) {
-      setUsedHints((prev) => prev + 1);
+    if (currentHintIndex.current < currentProblem.hints.length) {
+      currentHintIndex.current++;
+      setUsedHints(currentHintIndex.current);
     }
   };
 
