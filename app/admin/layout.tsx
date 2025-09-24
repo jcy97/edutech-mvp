@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { BarChart3, FileText, Home, Settings, Menu, X } from "lucide-react";
+import {
+  BarChart3,
+  FileText,
+  Home,
+  Settings,
+  Menu,
+  X,
+  LogOut,
+} from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -12,7 +20,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const menuItems = [
     {
@@ -34,8 +45,40 @@ export default function AdminLayout({
 
   const isLoginPage = pathname === "/admin";
 
+  useEffect(() => {
+    if (isLoginPage) {
+      setIsLoading(false);
+      return;
+    }
+
+    const adminLoggedIn = localStorage.getItem("admin_logged_in");
+    if (adminLoggedIn === "true") {
+      setIsAuthenticated(true);
+    } else {
+      router.push("/admin");
+    }
+    setIsLoading(false);
+  }, [isLoginPage, router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_logged_in");
+    router.push("/admin");
+  };
+
   if (isLoginPage) {
     return <>{children}</>;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   const handleMenuItemClick = () => {
@@ -91,7 +134,7 @@ export default function AdminLayout({
             );
           })}
         </nav>
-        <div className="p-4 border-t mt-auto">
+        <div className="p-4 border-t mt-auto space-y-2">
           <Link href="/" onClick={handleMenuItemClick}>
             <Button
               variant="ghost"
@@ -102,6 +145,15 @@ export default function AdminLayout({
               메인으로
             </Button>
           </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="w-full gap-2 justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <LogOut size={16} />
+            로그아웃
+          </Button>
         </div>
       </aside>
 

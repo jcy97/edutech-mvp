@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,13 @@ export default function AdminLogin() {
   const router = useRouter();
 
   const isFormValid = adminId.trim().length > 0 && password.trim().length > 0;
+
+  useEffect(() => {
+    const adminLoggedIn = localStorage.getItem("admin_logged_in");
+    if (adminLoggedIn === "true") {
+      router.push("/admin/dashboard");
+    }
+  }, [router]);
 
   const togglePasswordVisibility = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,6 +56,7 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        localStorage.setItem("admin_logged_in", "true");
         toast.success("로그인 성공!");
         router.push("/admin/dashboard");
       } else {
