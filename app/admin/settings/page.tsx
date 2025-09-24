@@ -175,7 +175,7 @@ export default function AdminSettings() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="timer_minutes">문제별 힌트 타이머 (분)</Label>
+                <Label htmlFor="timer_minutes">힌트 타이머 (분)</Label>
                 <Input
                   id="timer_minutes"
                   type="number"
